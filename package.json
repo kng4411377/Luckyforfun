@@ -1,0 +1,43 @@
+{
+  "name": "ib-client-portal-sdk",
+  "version": "1.0.0",
+  "description": "Interactive Brokers Client Portal SDK for Node.js - Paper Trading and Market Data",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node examples/basic-usage.js",
+    "test": "node examples/test-connection.js",
+    "dev": "node --watch examples/basic-usage.js",
+    "orders": "node examples/order-management.js",
+    "brackets": "node examples/bracket-orders.js",
+    "market-data": "node examples/advanced-market-data.js"
+  },
+  "keywords": [
+    "interactive-brokers",
+    "trading",
+    "api",
+    "stocks",
+    "market-data",
+    "paper-trading"
+  ],
+  "author": "IB SDK",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "https": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ib-client-portal-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/ib-client-portal-sdk/issues"
+  },
+  "homepage": "https://github.com/your-username/ib-client-portal-sdk#readme"
+}

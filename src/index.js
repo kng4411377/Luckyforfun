@@ -1,0 +1,74 @@
+/**
+ * Interactive Brokers Client Portal SDK for Node.js
+ * 
+ * A comprehensive SDK for connecting to Interactive Brokers Client Portal API
+ * for paper trading and market data retrieval.
+ */
+
+export { IBClient } from './client.js';
+export { MarketDataClient } from './market-data.js';
+export { OrderClient, OrderTypes, OrderSides, TimeInForce } from './orders.js';
+export { Config } from './config.js';
+export {
+    IBSDKError,
+    AuthenticationError,
+    RateLimitError,
+    APIError,
+    ConnectionError,
+    InvalidSymbolError
+} from './exceptions.js';
+
+// Version information
+export const VERSION = '1.0.0';
+export const AUTHOR = 'IB SDK';
+
+/**
+ * Create a new IB Client with default configuration
+ * 
+ * @param {Object} [options] - Configuration options
+ * @returns {IBClient} Configured IB Client instance
+ */
+export function createClient(options = {}) {
+    const config = new Config(options);
+    return new IBClient(config);
+}
+
+/**
+ * Create a new Market Data Client with default configuration
+ * 
+ * @param {Object} [options] - Configuration options
+ * @returns {MarketDataClient} Configured Market Data Client instance
+ */
+export function createMarketDataClient(options = {}) {
+    const config = new Config(options);
+    const ibClient = new IBClient(config);
+    return new MarketDataClient(ibClient, config);
+}
+
+/**
+ * Create a new Order Client with default configuration
+ * 
+ * @param {Object} [options] - Configuration options
+ * @returns {OrderClient} Configured Order Client instance
+ */
+export function createOrderClient(options = {}) {
+    const config = new Config(options);
+    const ibClient = new IBClient(config);
+    return new OrderClient(ibClient, config);
+}
+
+// Default export for convenience
+export default {
+    IBClient,
+    MarketDataClient,
+    OrderClient,
+    Config,
+    createClient,
+    createMarketDataClient,
+    createOrderClient,
+    OrderTypes,
+    OrderSides,
+    TimeInForce,
+    VERSION,
+    AUTHOR
+};
