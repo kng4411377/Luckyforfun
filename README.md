@@ -501,6 +501,34 @@ MIT License - see LICENSE file for details.
 4. Add tests if applicable
 5. Submit a pull request
 
+## 📊 Project Stats
+
+- **Total Files**: 11 source files + 5 examples
+- **Dependencies**: Minimal (only axios + https)
+- **Node.js**: 16.0.0+ required
+- **License**: MIT
+- **API Coverage**: Market Data + Complete Order Management
+- **Order Types**: 5 basic types + Bracket orders
+- **Examples**: 5 comprehensive examples
+
+## 🎯 SDK Capabilities Summary
+
+| Feature             | Status     | Description                         |
+| ------------------- | ---------- | ----------------------------------- |
+| 🔐 Authentication    | ✅ Complete | IB Gateway session management       |
+| 📊 Market Data       | ✅ Complete | Real-time prices, snapshots, search |
+| 📋 Market Orders     | ✅ Complete | Immediate execution orders          |
+| 💰 Limit Orders      | ✅ Complete | Price-specific orders               |
+| 🛑 Stop Orders       | ✅ Complete | Stop-loss and stop-buy orders       |
+| 🎯 Stop-Limit Orders | ✅ Complete | Combined stop + limit orders        |
+| 📈 Trailing Stops    | ✅ Complete | Dynamic stops ($ or %)              |
+| 🎪 Bracket Orders    | ✅ Complete | Parent + profit + stop orders       |
+| 👀 Order Monitoring  | ✅ Complete | Live orders, status, history        |
+| ✏️ Order Management  | ✅ Complete | Modify, cancel, track orders        |
+| ⚡ Rate Limiting     | ✅ Complete | 1-5 req/sec with auto-throttling    |
+| 🛡️ Error Handling    | ✅ Complete | Custom exceptions for all scenarios |
+| 📚 Documentation     | ✅ Complete | Full API docs + examples            |
+
 ## 📞 Support
 
 - **IB API Documentation**: [Interactive Brokers API Docs](https://www.interactivebrokers.com/campus/ibkr-api-page/webapi-doc/)
@@ -513,6 +541,17 @@ MIT License - see LICENSE file for details.
 - [IB Gateway Download](https://www.interactivebrokers.com/en/trading/ib-api.php)
 - [Paper Trading Guide](https://www.interactivebrokers.com/en/trading/free-trial.php)
 
+## 🏆 What Makes This SDK Special
+
+- **🎯 Paper Trading First**: Designed specifically for safe paper trading
+- **📋 Complete Order Types**: All essential order types in one package
+- **🎪 Advanced Features**: Bracket orders with profit targets and stops
+- **⚡ Performance Optimized**: Rate limiting, caching, and efficient API usage
+- **🛡️ Safety Focused**: Comprehensive error handling and input validation
+- **📚 Well Documented**: Extensive examples and clear API documentation
+- **🔧 Easy to Use**: Simple, intuitive API design
+- **🚀 Production Ready**: Robust, tested, and reliable
+
 ---
 
-**Happy Trading! 📈**
+**Ready to start algorithmic trading with Interactive Brokers? Get started in minutes! 🚀📈**
