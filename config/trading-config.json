@@ -1,0 +1,83 @@
+{
+  "strategy": {
+    "name": "Momentum Trading Strategy",
+    "version": "1.0.0",
+    "description": "Automated momentum-based trading strategy with risk management"
+  },
+  "watchlist": [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "AMD", "CRM",
+    "ADBE", "PYPL", "INTC", "CSCO", "ORCL", "IBM", "QCOM", "TXN", "AVGO", "MU"
+  ],
+  "momentum": {
+    "lookbackDays": 20,
+    "thresholdPercentage": 5.0,
+    "volumeThreshold": 1000000,
+    "priceRange": {
+      "min": 10.0,
+      "max": 1000.0
+    }
+  },
+  "technicalIndicators": {
+    "rsi": {
+      "period": 14,
+      "oversold": 30,
+      "overbought": 70
+    },
+    "movingAverages": {
+      "short": 10,
+      "long": 20
+    },
+    "bollinger": {
+      "period": 20,
+      "standardDeviations": 2
+    }
+  },
+  "riskManagement": {
+    "maxPositions": 5,
+    "maxPositionSize": 10000,
+    "maxDailyLoss": 1000,
+    "stopLossPercentage": 2.0,
+    "takeProfitPercentage": 4.0,
+    "trailingStopPercentage": 1.5,
+    "riskRewardRatio": 2.0
+  },
+  "orderSettings": {
+    "orderType": "LIMIT",
+    "timeInForce": "DAY",
+    "limitPriceOffset": 0.01,
+    "maxSlippage": 0.5
+  },
+  "automation": {
+    "enabled": false,
+    "scanIntervalMinutes": 5,
+    "tradingHours": {
+      "start": "09:30",
+      "end": "16:00",
+      "timezone": "America/New_York"
+    },
+    "weekendsEnabled": false,
+    "holidaysEnabled": false
+  },
+  "logging": {
+    "level": "info",
+    "file": "logs/trading.log",
+    "maxFileSize": "10MB",
+    "maxFiles": 5,
+    "console": true
+  },
+  "notifications": {
+    "enabled": false,
+    "events": ["trade_executed", "stop_loss_hit", "take_profit_hit", "error"],
+    "channels": {
+      "webhook": false,
+      "email": false,
+      "slack": false
+    }
+  },
+  "backtesting": {
+    "enabled": false,
+    "startDate": "2023-01-01",
+    "endDate": "2023-12-31",
+    "initialCapital": 100000
+  }
+}
