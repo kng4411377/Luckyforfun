@@ -5,38 +5,19 @@
       "config": {
         "enabled": true,
         "priority": 1,
-        "allocation": 0.3,
+        "allocation": 0.4,
         "momentum": {
-          "lookbackDays": 20,
-          "thresholdPercentage": 5.0,
-          "volumeThreshold": 1000000,
+          "lookbackDays": 30,
+          "thresholdPercentage": 6,
+          "volumeThreshold": 1500000,
           "priceRange": {
-            "min": 10.0,
-            "max": 1000.0
-          }
-        },
-        "technicalIndicators": {
-          "rsi": {
-            "period": 14,
-            "oversold": 30,
-            "overbought": 70
-          },
-          "movingAverages": {
-            "short": 10,
-            "long": 20
-          },
-          "bollinger": {
-            "period": 20,
-            "standardDeviations": 2
+            "min": 15,
+            "max": 800
           }
         },
         "riskManagement": {
-          "maxPositions": 5,
-          "maxPositionSize": 10000,
-          "stopLossPercentage": 2.0,
-          "takeProfitPercentage": 4.0,
-          "trailingStopPercentage": 1.5,
-          "riskRewardRatio": 2.0
+          "maxPositions": 3,
+          "stopLossPercentage": 1.8
         }
       }
     },
@@ -47,7 +28,7 @@
         "priority": 2,
         "allocation": 0.2,
         "meanReversion": {
-          "threshold": 3.0
+          "threshold": 3
         },
         "technicalIndicators": {
           "rsi": {
@@ -66,16 +47,14 @@
         "riskManagement": {
           "maxPositionSize": 5000,
           "stopLossPercentage": 1.5,
-          "takeProfitPercentage": 3.0
+          "takeProfitPercentage": 3
         }
       }
-    }
-  ],
-  "available": [
+    },
     {
       "name": "wyckoff-v2",
       "config": {
-        "enabled": false,
+        "enabled": true,
         "priority": 3,
         "allocation": 0.15,
         "lookback": 50,
@@ -86,7 +65,9 @@
           "takeProfitPercent": 0.05
         }
       }
-    },
+    }
+  ],
+  "available": [
     {
       "name": "elder-triple-screen",
       "config": {
@@ -103,8 +84,8 @@
         "rsiBuy": 25,
         "rsiSell": 75,
         "atrLen": 14,
-        "stopATR": 2.0,
-        "trailATR": 3.0,
+        "stopATR": 2,
+        "trailATR": 3,
         "riskPerTradeUSD": 1000,
         "maxPositionSizeUSD": 25000
       }
@@ -139,7 +120,7 @@
         "minRNDIntensity": 0.05,
         "minOpMargin": 0.12,
         "improvingMargins": true,
-        "maxDebtToEquity": 1.0,
+        "maxDebtToEquity": 1,
         "minFreeCashFlowMargin": 0.05,
         "minScoreToBuy": 0.65,
         "breakoutLookback": 252,
@@ -205,7 +186,7 @@
         "maxPositionSize": 5000,
         "minAvgDollarVolume": 200000,
         "buyPtoNCAV": 0.67,
-        "sellPtoNCAV": 1.0,
+        "sellPtoNCAV": 1,
         "requirePositiveOCF": true,
         "excludeFinancials": true,
         "excludeDistress": true,
@@ -268,7 +249,7 @@
         "slow": 200,
         "volLookback": 20,
         "targetVol": 0.15,
-        "maxLeverage": 2.0,
+        "maxLeverage": 2,
         "riskManagement": {
           "maxPositionSize": 50000,
           "stopLossPercent": 0.05,

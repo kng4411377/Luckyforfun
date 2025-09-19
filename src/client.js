@@ -29,18 +29,23 @@ export class IBClient {
         this.accountId = null;
         
         // Create axios instance with custom configuration
-        this.httpClient = axios.create({
-            baseURL: this.config.baseUrl,
-            timeout: this.config.timeout,
-            headers: {
-                'User-Agent': 'IB-SDK/1.0.0',
-                'Content-Type': 'application/json'
-            },
-            // Disable SSL verification for IB Gateway (uses self-signed certs)
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: this.config.verifySsl
-            })
-        });
+        const axiosConfig = {
+          baseURL: this.config.baseUrl,
+          timeout: this.config.timeout,
+          headers: {
+            "User-Agent": "IB-SDK/1.0.0",
+            "Content-Type": "application/json",
+          },
+        };
+
+        // Only add HTTPS agent if using HTTPS
+        if (this.config.useHttps) {
+          axiosConfig.httpsAgent = new https.Agent({
+            rejectUnauthorized: this.config.verifySsl,
+          });
+        }
+        
+        this.httpClient = axios.create(axiosConfig);
         
         // Setup request interceptor for rate limiting
         this.httpClient.interceptors.request.use(
@@ -237,6 +242,27 @@ export class IBClient {
         }
         
         return await this._makeRequest('GET', `portal/portfolio/${accId}/summary`);
+    }
+    
+    /**
+     * Get portfolio positions (holdings)
+     * 
+     * @param {string} [accountId] - Account ID (uses default if not provided)
+     * @returns {Promise<Array>} List of positions
+     * @throws {AuthenticationError} If not authenticated
+     * @throws {IBSDKError} If no account ID available
+     */
+    async getPositions(accountId = null) {
+        if (!this.authenticated) {
+            throw new AuthenticationError('Must be authenticated to get positions');
+        }
+        
+        const accId = accountId || this.accountId;
+        if (!accId) {
+            throw new IBSDKError('No account ID available. Call getAccounts() first.');
+        }
+        
+        return await this._makeRequest('GET', `portal/portfolio/${accId}/positions/0`);
     }
     
     /**
