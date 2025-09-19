@@ -1,0 +1,62 @@
+{
+  "enabled": [
+    {
+      "name": "momentum",
+      "config": {
+        "enabled": true,
+        "priority": 1,
+        "allocation": 0.8,
+        "momentum": {
+          "lookbackDays": 20,
+          "thresholdPercentage": 5.0,
+          "volumeThreshold": 1000000,
+          "priceRange": {
+            "min": 10.0,
+            "max": 1000.0
+          }
+        },
+        "technicalIndicators": {
+          "rsi": {
+            "period": 14,
+            "oversold": 30,
+            "overbought": 70
+          },
+          "movingAverages": {
+            "short": 10,
+            "long": 20
+          },
+          "bollinger": {
+            "period": 20,
+            "standardDeviations": 2
+          }
+        },
+        "riskManagement": {
+          "maxPositions": 5,
+          "maxPositionSize": 10000,
+          "stopLossPercentage": 2.0,
+          "takeProfitPercentage": 4.0,
+          "trailingStopPercentage": 1.5,
+          "riskRewardRatio": 2.0
+        }
+      }
+    }
+  ],
+  "global": {
+    "maxConcurrentStrategies": 3,
+    "riskAllocation": {
+      "conservative": 0.3,
+      "moderate": 0.5,
+      "aggressive": 0.2
+    },
+    "consolidation": {
+      "method": "weighted_voting",
+      "minimumConsensus": 0.6,
+      "conflictResolution": "strongest_signal"
+    },
+    "performance": {
+      "trackingEnabled": true,
+      "metricsRetention": 30,
+      "benchmarkSymbol": "SPY"
+    }
+  }
+}

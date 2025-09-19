@@ -13,7 +13,10 @@
     "market-data": "node examples/advanced-market-data.js",
     "trading-bot": "node trading/momentum-bot.js",
     "strategy-test": "node trading/strategy-test.js",
-    "backtest": "node trading/backtest.js"
+    "backtest": "node trading/backtest.js",
+    "strategy-manager": "node trading/strategy-manager-cli.js",
+    "attach-strategy": "node trading/strategy-manager-cli.js attach",
+    "detach-strategy": "node trading/strategy-manager-cli.js detach"
   },
   "keywords": [
     "interactive-brokers",
