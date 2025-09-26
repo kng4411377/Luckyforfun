@@ -1,0 +1,983 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Trading Strategy Management API",
+    "description": "REST API for managing trading strategies, retrieving account information, and integrating with Interactive Brokers Client Portal.\n\n## Overview\n\nThis API provides comprehensive endpoints for:\n- **Strategy Configuration Management**: Create, read, update, enable/disable trading strategies\n- **Account & Holdings**: Retrieve current portfolio positions and account summaries\n- **IBKR Integration**: Connect to Interactive Brokers Client Portal with configurable HTTP/HTTPS support\n\n## Authentication\n\nThe API server itself does not require authentication as it's designed for internal use. However, IBKR-related endpoints require an authenticated session with IB Gateway or TWS.\n\n## Configuration\n\nThe API supports both HTTP and HTTPS connections to IBKR Client Portal:\n- **HTTP** (default): Recommended for localhost connections (`IB_USE_HTTPS=false`)\n- **HTTPS**: For secure remote connections (`IB_USE_HTTPS=true`)\n\n## Rate Limiting\n\nIBKR endpoints are automatically rate-limited to comply with Interactive Brokers API limits (default: 1 request/second).\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Trading Strategy API",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "API base path"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check and system status"
+    },
+    {
+      "name": "Strategy Management",
+      "description": "Trading strategy configuration and management"
+    },
+    {
+      "name": "Account & Holdings",
+      "description": "Account information and portfolio positions"
+    },
+    {
+      "name": "IBKR Integration",
+      "description": "Interactive Brokers Client Portal integration"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "description": "Check API server health and configuration status.\n\nReturns server status, timestamp, and IBKR configuration details including:\n- Server health status\n- Current timestamp\n- IBKR connection configuration (host, port, protocol)\n",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2024-01-01T12:00:00.000Z",
+                  "ibkrConfig": {
+                    "host": "127.0.0.1",
+                    "port": 5000,
+                    "protocol": "http"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategies": {
+      "get": {
+        "tags": [
+          "Strategy Management"
+        ],
+        "summary": "Get All Strategies",
+        "description": "Retrieve all trading strategies including enabled, available, and global configuration.\n\nReturns:\n- **Enabled strategies**: Currently active strategies with their configurations\n- **Available strategies**: Inactive strategies that can be enabled\n- **Global settings**: System-wide configuration like max concurrent strategies, risk allocation, etc.\n\nEach strategy includes detailed configuration parameters such as:\n- Risk management settings (stop loss, take profit, position sizing)\n- Technical indicators (RSI, moving averages, Bollinger bands)\n- Strategy-specific parameters (lookback periods, thresholds, etc.)\n",
+        "operationId": "getAllStrategies",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all strategies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategiesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategies/{name}": {
+      "get": {
+        "tags": [
+          "Strategy Management"
+        ],
+        "summary": "Get Specific Strategy",
+        "description": "Retrieve configuration for a specific trading strategy by name.\n\nReturns detailed configuration including:\n- Strategy status (enabled/disabled)\n- Allocation percentage\n- Risk management parameters\n- Technical indicator settings\n- Strategy-specific parameters\n\nThe strategy can be in either the enabled or available list.\n",
+        "operationId": "getStrategy",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Strategy name (e.g., \"momentum\", \"mean-reversion\", \"wyckoff-v2\")",
+            "schema": {
+              "type": "string",
+              "example": "momentum"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Strategy found and returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Strategy"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Strategy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Strategy not found",
+                  "message": "Strategy 'invalid-name' does not exist"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Strategy Management"
+        ],
+        "summary": "Update Strategy Configuration",
+        "description": "Update the configuration of an existing trading strategy.\n\nThis endpoint allows you to modify:\n- Strategy parameters (lookback periods, thresholds, etc.)\n- Risk management settings (stop loss, take profit, position sizes)\n- Technical indicator parameters (RSI periods, moving averages, etc.)\n- Allocation percentages\n\n**Note**: Changes are immediately saved to the configuration file and will affect the strategy's behavior.\n\n**Important**: The request must include a complete `config` object. Partial updates are not supported.\n",
+        "operationId": "updateStrategy",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Strategy name to update",
+            "schema": {
+              "type": "string",
+              "example": "momentum"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Updated strategy configuration",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategyUpdateRequest"
+              },
+              "example": {
+                "config": {
+                  "enabled": true,
+                  "priority": 1,
+                  "allocation": 0.4,
+                  "momentum": {
+                    "lookbackDays": 30,
+                    "thresholdPercentage": 6,
+                    "volumeThreshold": 1500000
+                  },
+                  "riskManagement": {
+                    "maxPositions": 3,
+                    "stopLossPercentage": 1.8,
+                    "takeProfitPercentage": 4
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Strategy updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Strategy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategies/{name}/enable": {
+      "post": {
+        "tags": [
+          "Strategy Management"
+        ],
+        "summary": "Enable Strategy",
+        "description": "Enable a trading strategy by moving it from the available list to the enabled list.\n\nWhen a strategy is enabled:\n- It's moved from the `available` array to the `enabled` array in the configuration\n- The strategy's `enabled` flag is set to `true`\n- The strategy becomes active and will be used by the trading system\n\n**Prerequisites**: \n- Strategy must exist in the available strategies list\n- Strategy must not already be enabled\n\n**Note**: This operation immediately updates the configuration file.\n",
+        "operationId": "enableStrategy",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the strategy to enable",
+            "schema": {
+              "type": "string",
+              "example": "wyckoff-v2"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Strategy enabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Strategy already enabled or invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Strategy already enabled",
+                  "message": "Strategy 'momentum' is already enabled"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Strategy not found in available strategies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategies/{name}/disable": {
+      "post": {
+        "tags": [
+          "Strategy Management"
+        ],
+        "summary": "Disable Strategy",
+        "description": "Disable a trading strategy by moving it from the enabled list to the available list.\n\nWhen a strategy is disabled:\n- It's moved from the `enabled` array to the `available` array in the configuration\n- The strategy's `enabled` flag is set to `false`\n- The strategy becomes inactive and will not be used by the trading system\n\n**Prerequisites**: \n- Strategy must exist in the enabled strategies list\n\n**Note**: This operation immediately updates the configuration file.\n",
+        "operationId": "disableStrategy",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the strategy to disable",
+            "schema": {
+              "type": "string",
+              "example": "momentum"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Strategy disabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StrategyActionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Strategy not found in enabled strategies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/status": {
+      "get": {
+        "tags": [
+          "Account & Holdings"
+        ],
+        "summary": "Get Account Status",
+        "description": "Retrieve account authentication status and available accounts from IBKR.\n\nThis endpoint:\n- Checks if the session is authenticated with IBKR\n- Returns list of available trading accounts\n- Identifies the primary account being used\n\n**Prerequisites**: \n- IB Gateway or TWS must be running\n- User must be logged in to IB Gateway/TWS\n- API connections must be enabled in IB Gateway/TWS settings\n\n**Account Types**:\n- Paper trading accounts start with \"DU\" prefix\n- Live trading accounts start with \"U\" prefix\n",
+        "operationId": "getAccountStatus",
+        "responses": {
+          "200": {
+            "description": "Account status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated with IBKR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Connection error or IBKR API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/holdings": {
+      "get": {
+        "tags": [
+          "Account & Holdings"
+        ],
+        "summary": "Get Account Holdings",
+        "description": "Retrieve current portfolio positions (holdings) from IBKR account.\n\nReturns detailed position information including:\n- **Contract details**: Symbol, contract ID, currency\n- **Position size**: Number of shares/contracts held\n- **Market data**: Current market price, market value\n- **Cost basis**: Average cost per share\n- **P&L**: Unrealized profit/loss for each position\n\n**Position Data Fields**:\n- `contractId`: Unique IBKR contract identifier\n- `position`: Number of shares (positive = long, negative = short)\n- `marketPrice`: Current market price per share\n- `marketValue`: Total market value of position\n- `avgCost`: Average cost basis per share\n- `unrealizedPnl`: Unrealized profit/loss\n\n**Prerequisites**: \n- Must be authenticated with IBKR\n- Account must have active positions to return data\n",
+        "operationId": "getAccountHoldings",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "description": "Specific account ID to query (uses primary account if not specified)",
+            "schema": {
+              "type": "string",
+              "example": "DU123456"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Holdings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated with IBKR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/account/summary": {
+      "get": {
+        "tags": [
+          "Account & Holdings"
+        ],
+        "summary": "Get Account Summary",
+        "description": "Retrieve comprehensive account summary information from IBKR.\n\nReturns key account metrics including:\n- **Net Liquidation Value**: Total account value\n- **Total Cash Value**: Available cash balance\n- **Gross Position Value**: Total value of all positions\n- **Buying Power**: Available buying power\n- **Maintenance Margin**: Required margin for current positions\n\n**Summary Fields**:\n- `NetLiquidation`: Total account equity\n- `TotalCashValue`: Cash available for trading\n- `GrossPositionValue`: Market value of all positions\n- `BuyingPower`: Available purchasing power\n- `MaintMarginReq`: Maintenance margin requirement\n\nAll monetary values include currency denomination (typically USD for US accounts).\n\n**Prerequisites**: \n- Must be authenticated with IBKR\n",
+        "operationId": "getAccountSummary",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "description": "Specific account ID to query (uses primary account if not specified)",
+            "schema": {
+              "type": "string",
+              "example": "DU123456"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account summary retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated with IBKR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ibkr/connect": {
+      "post": {
+        "tags": [
+          "IBKR Integration"
+        ],
+        "summary": "Connect to IBKR",
+        "description": "Establish and test connection to Interactive Brokers Client Portal.\n\nThis endpoint performs a comprehensive connection test:\n1. **Health Check**: Tests basic connectivity to IB Gateway/TWS\n2. **Authentication Check**: Verifies user is logged in\n3. **Account Discovery**: Retrieves available trading accounts\n4. **Configuration Validation**: Confirms API settings\n\n**Connection Process**:\n- Connects using configured protocol (HTTP/HTTPS)\n- Tests API endpoint availability\n- Validates authentication status\n- Discovers paper and live trading accounts\n\n**Prerequisites**:\n- IB Gateway or TWS must be running on configured host/port\n- User must be logged in with valid credentials\n- API connections must be enabled in IB settings\n\n**Configuration**:\n- Default: HTTP connection to localhost:5000\n- Configurable via environment variables or API server options\n",
+        "operationId": "connectIBKR",
+        "responses": {
+          "200": {
+            "description": "Successfully connected to IBKR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IBKRConnectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required - user not logged in to IB Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IBKRAuthErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Connection failed - IB Gateway not accessible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ibkr/status": {
+      "get": {
+        "tags": [
+          "IBKR Integration"
+        ],
+        "summary": "Get IBKR Connection Status",
+        "description": "Check current status of IBKR Client Portal connection.\n\nReturns comprehensive connection information:\n- **Configuration**: Current IBKR connection settings\n- **Health Status**: Gateway/TWS accessibility\n- **Authentication Status**: Login and session status\n- **Connection State**: Overall connectivity status\n\n**Status Information**:\n- `config`: Connection configuration string\n- `health`: IB Gateway health check results\n- `authStatus`: Authentication and session details\n- `connected`: Boolean indicating overall connection status\n\n**Use Cases**:\n- Monitor connection health\n- Troubleshoot connectivity issues\n- Verify configuration settings\n- Check authentication status before making trading calls\n",
+        "operationId": "getIBKRStatus",
+        "responses": {
+          "200": {
+            "description": "IBKR status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IBKRStatusResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to check IBKR status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy"
+            ],
+            "description": "Server health status"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Current server timestamp in ISO 8601 format"
+          },
+          "ibkrConfig": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "IBKR Gateway host address",
+                "example": "127.0.0.1"
+              },
+              "port": {
+                "type": "integer",
+                "description": "IBKR Gateway port number",
+                "example": 5000
+              },
+              "protocol": {
+                "type": "string",
+                "enum": [
+                  "http",
+                  "https"
+                ],
+                "description": "Connection protocol",
+                "example": "http"
+              }
+            },
+            "description": "IBKR connection configuration"
+          }
+        }
+      },
+      "Strategy": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique strategy identifier",
+            "example": "momentum"
+          },
+          "config": {
+            "type": "object",
+            "description": "Strategy configuration object with parameters specific to each strategy type",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the strategy is currently active"
+              },
+              "priority": {
+                "type": "integer",
+                "description": "Strategy execution priority (lower number = higher priority)",
+                "minimum": 1
+              },
+              "allocation": {
+                "type": "number",
+                "format": "float",
+                "description": "Portfolio allocation percentage (0.0 to 1.0)",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "StrategiesResponse": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Strategy"
+            },
+            "description": "Currently active strategies"
+          },
+          "available": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Strategy"
+            },
+            "description": "Available but inactive strategies"
+          },
+          "global": {
+            "type": "object",
+            "description": "Global system configuration",
+            "properties": {
+              "maxConcurrentStrategies": {
+                "type": "integer",
+                "description": "Maximum number of strategies that can run simultaneously"
+              },
+              "riskAllocation": {
+                "type": "object",
+                "description": "Risk allocation percentages",
+                "properties": {
+                  "conservative": {
+                    "type": "number",
+                    "format": "float"
+                  },
+                  "moderate": {
+                    "type": "number",
+                    "format": "float"
+                  },
+                  "aggressive": {
+                    "type": "number",
+                    "format": "float"
+                  }
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "StrategyUpdateRequest": {
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "type": "object",
+            "description": "Complete strategy configuration object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "StrategyUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the update was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Success message",
+            "example": "Strategy 'momentum' updated successfully"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/Strategy"
+          }
+        }
+      },
+      "StrategyActionResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the action was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Action result message",
+            "example": "Strategy 'wyckoff-v2' enabled successfully"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/Strategy"
+          }
+        }
+      },
+      "AccountStatusResponse": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean",
+            "description": "Whether the session is authenticated with IBKR"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "accountId": {
+                  "type": "string",
+                  "description": "Account identifier",
+                  "example": "DU123456"
+                },
+                "accountVan": {
+                  "type": "string",
+                  "description": "Account VAN (Virtual Account Number)"
+                },
+                "displayName": {
+                  "type": "string",
+                  "description": "Human-readable account name"
+                }
+              }
+            },
+            "description": "List of available trading accounts"
+          },
+          "primaryAccount": {
+            "type": "string",
+            "description": "Primary account ID being used",
+            "example": "DU123456"
+          }
+        }
+      },
+      "Position": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "integer",
+            "description": "IBKR contract identifier",
+            "example": 265598
+          },
+          "position": {
+            "type": "number",
+            "description": "Number of shares/contracts (positive = long, negative = short)",
+            "example": 100
+          },
+          "marketPrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Current market price per share",
+            "example": 150.25
+          },
+          "marketValue": {
+            "type": "number",
+            "format": "float",
+            "description": "Total market value of position",
+            "example": 15025
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency denomination",
+            "example": "USD"
+          },
+          "avgCost": {
+            "type": "number",
+            "format": "float",
+            "description": "Average cost basis per share",
+            "example": 148.5
+          },
+          "unrealizedPnl": {
+            "type": "number",
+            "format": "float",
+            "description": "Unrealized profit/loss",
+            "example": 175
+          }
+        }
+      },
+      "HoldingsResponse": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Account ID for these holdings",
+            "example": "DU123456"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            },
+            "description": "List of current positions"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data retrieval timestamp"
+          }
+        }
+      },
+      "AccountSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Account ID for this summary",
+            "example": "DU123456"
+          },
+          "summary": {
+            "type": "object",
+            "description": "Account summary data",
+            "properties": {
+              "NetLiquidation": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Net liquidation value",
+                    "example": "100000.00"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "example": "USD"
+                  }
+                }
+              },
+              "TotalCashValue": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Total cash value",
+                    "example": "85000.00"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "example": "USD"
+                  }
+                }
+              }
+            },
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data retrieval timestamp"
+          }
+        }
+      },
+      "IBKRConnectResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether connection was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Connection result message",
+            "example": "Successfully connected to IBKR"
+          },
+          "config": {
+            "type": "string",
+            "description": "Configuration string",
+            "example": "Config(host='127.0.0.1', port=5000, protocol=http, rateLimit=1, verifySsl=false)"
+          },
+          "health": {
+            "type": "object",
+            "description": "IB Gateway health check results",
+            "additionalProperties": true
+          },
+          "authStatus": {
+            "type": "object",
+            "properties": {
+              "authenticated": {
+                "type": "boolean",
+                "description": "Authentication status"
+              },
+              "competing": {
+                "type": "boolean",
+                "description": "Whether there's a competing session"
+              },
+              "connected": {
+                "type": "boolean",
+                "description": "Connection status"
+              }
+            },
+            "additionalProperties": true
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Available trading accounts"
+          }
+        }
+      },
+      "IBKRAuthErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Authentication required"
+          },
+          "message": {
+            "type": "string",
+            "example": "Please log in to IB Gateway first"
+          },
+          "health": {
+            "type": "object",
+            "description": "Gateway health status"
+          },
+          "authStatus": {
+            "type": "object",
+            "description": "Current authentication status"
+          }
+        }
+      },
+      "IBKRStatusResponse": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "string",
+            "description": "Current IBKR configuration",
+            "example": "Config(host='127.0.0.1', port=5000, protocol=http, rateLimit=1, verifySsl=false)"
+          },
+          "health": {
+            "type": "object",
+            "description": "IB Gateway health check results",
+            "additionalProperties": true
+          },
+          "authStatus": {
+            "type": "object",
+            "description": "Authentication status details",
+            "additionalProperties": true
+          },
+          "connected": {
+            "type": "boolean",
+            "description": "Overall connection status"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error type or category",
+            "example": "Strategy not found"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed error message",
+            "example": "Strategy 'invalid-name' does not exist"
+          }
+        }
+      }
+    }
+  }
+}

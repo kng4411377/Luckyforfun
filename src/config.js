@@ -8,7 +8,7 @@ export class Config {
    */
   static DEFAULT_HOST = "127.0.0.1";
   static DEFAULT_PORT = 5000;
-  static DEFAULT_BASE_URL = `https://${Config.DEFAULT_HOST}:${Config.DEFAULT_PORT}/v1/api`;
+  static DEFAULT_BASE_URL = `http://${Config.DEFAULT_HOST}:${Config.DEFAULT_PORT}/v1`;
 
   /**
    * Rate limiting settings (per IB documentation)
@@ -30,10 +30,10 @@ export class Config {
    * Initialize configuration
    *
    * @param {Object} options - Configuration options
-   * @param {string} [options.host] - IB Gateway host (default: 127.0.0.1)
-   * @param {number} [options.port] - IB Gateway port (default: 5000)
+   * @param {string} [options.host] - IB Gateway host (default: 127.0.0.1, env: IB_HOST)
+   * @param {number} [options.port] - IB Gateway port (default: 5000, env: IB_PORT)
    * @param {string} [options.baseUrl] - Full base URL (overrides host/port if provided)
-   * @param {boolean} [options.useHttps=true] - Whether to use HTTPS or HTTP
+   * @param {boolean} [options.useHttps=false] - Whether to use HTTPS or HTTP (env: IB_USE_HTTPS)
    * @param {number} [options.rateLimit=1.0] - Rate limit in requests per second
    * @param {boolean} [options.verifySsl=false] - Whether to verify SSL certificates
    * @param {number} [options.timeout=30000] - Request timeout in milliseconds
@@ -42,13 +42,18 @@ export class Config {
     this.host = options.host || process.env.IB_HOST || Config.DEFAULT_HOST;
     this.port =
       options.port || parseInt(process.env.IB_PORT) || Config.DEFAULT_PORT;
-    this.useHttps = options.useHttps !== undefined ? options.useHttps : true;
+    this.useHttps =
+      options.useHttps !== undefined
+        ? options.useHttps
+        : process.env.IB_USE_HTTPS !== undefined
+        ? process.env.IB_USE_HTTPS.toLowerCase() === "true"
+        : false;
 
     if (options.baseUrl) {
       this.baseUrl = options.baseUrl;
     } else {
       const protocol = this.useHttps ? "https" : "http";
-      this.baseUrl = `${protocol}://${this.host}:${this.port}/v1/api`;
+      this.baseUrl = `${protocol}://${this.host}:${this.port}/v1`;
     }
 
     this.rateLimit = Math.min(

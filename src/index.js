@@ -5,6 +5,21 @@
  * for paper trading and market data retrieval.
  */
 
+// Import all classes and functions first
+import { IBClient } from './client.js';
+import { MarketDataClient } from './market-data.js';
+import { OrderClient, OrderTypes, OrderSides, TimeInForce } from './orders.js';
+import { Config } from './config.js';
+import {
+    IBSDKError,
+    AuthenticationError,
+    RateLimitError,
+    APIError,
+    ConnectionError,
+    InvalidSymbolError
+} from './exceptions.js';
+
+// Re-export all imports
 export { IBClient } from './client.js';
 export { MarketDataClient } from './market-data.js';
 export { OrderClient, OrderTypes, OrderSides, TimeInForce } from './orders.js';

@@ -1,0 +1,870 @@
+openapi: 3.0.3
+info:
+  title: Trading Strategy Management API
+  description: |
+    REST API for managing trading strategies, retrieving account information, and integrating with Interactive Brokers Client Portal.
+    
+    ## Overview
+    
+    This API provides comprehensive endpoints for:
+    - **Strategy Configuration Management**: Create, read, update, enable/disable trading strategies
+    - **Account & Holdings**: Retrieve current portfolio positions and account summaries
+    - **IBKR Integration**: Connect to Interactive Brokers Client Portal with configurable HTTP/HTTPS support
+    
+    ## Authentication
+    
+    The API server itself does not require authentication as it's designed for internal use. However, IBKR-related endpoints require an authenticated session with IB Gateway or TWS.
+    
+    ## Configuration
+    
+    The API supports both HTTP and HTTPS connections to IBKR Client Portal:
+    - **HTTP** (default): Recommended for localhost connections (`IB_USE_HTTPS=false`)
+    - **HTTPS**: For secure remote connections (`IB_USE_HTTPS=true`)
+    
+    ## Rate Limiting
+    
+    IBKR endpoints are automatically rate-limited to comply with Interactive Brokers API limits (default: 1 request/second).
+    
+  version: 1.0.0
+  contact:
+    name: Trading Strategy API
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: http://localhost:3000/api
+    description: API base path
+
+tags:
+  - name: Health
+    description: Health check and system status
+  - name: Strategy Management
+    description: Trading strategy configuration and management
+  - name: Account & Holdings
+    description: Account information and portfolio positions
+  - name: IBKR Integration
+    description: Interactive Brokers Client Portal integration
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health Check
+      description: |
+        Check API server health and configuration status.
+        
+        Returns server status, timestamp, and IBKR configuration details including:
+        - Server health status
+        - Current timestamp
+        - IBKR connection configuration (host, port, protocol)
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                timestamp: "2024-01-01T12:00:00.000Z"
+                ibkrConfig:
+                  host: "127.0.0.1"
+                  port: 5000
+                  protocol: "http"
+
+  /api/strategies:
+    get:
+      tags:
+        - Strategy Management
+      summary: Get All Strategies
+      description: |
+        Retrieve all trading strategies including enabled, available, and global configuration.
+        
+        Returns:
+        - **Enabled strategies**: Currently active strategies with their configurations
+        - **Available strategies**: Inactive strategies that can be enabled
+        - **Global settings**: System-wide configuration like max concurrent strategies, risk allocation, etc.
+        
+        Each strategy includes detailed configuration parameters such as:
+        - Risk management settings (stop loss, take profit, position sizing)
+        - Technical indicators (RSI, moving averages, Bollinger bands)
+        - Strategy-specific parameters (lookback periods, thresholds, etc.)
+      operationId: getAllStrategies
+      responses:
+        '200':
+          description: Successfully retrieved all strategies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrategiesResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/strategies/{name}:
+    get:
+      tags:
+        - Strategy Management
+      summary: Get Specific Strategy
+      description: |
+        Retrieve configuration for a specific trading strategy by name.
+        
+        Returns detailed configuration including:
+        - Strategy status (enabled/disabled)
+        - Allocation percentage
+        - Risk management parameters
+        - Technical indicator settings
+        - Strategy-specific parameters
+        
+        The strategy can be in either the enabled or available list.
+      operationId: getStrategy
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Strategy name (e.g., "momentum", "mean-reversion", "wyckoff-v2")
+          schema:
+            type: string
+            example: "momentum"
+      responses:
+        '200':
+          description: Strategy found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Strategy'
+        '404':
+          description: Strategy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Strategy not found"
+                message: "Strategy 'invalid-name' does not exist"
+
+    put:
+      tags:
+        - Strategy Management
+      summary: Update Strategy Configuration
+      description: |
+        Update the configuration of an existing trading strategy.
+        
+        This endpoint allows you to modify:
+        - Strategy parameters (lookback periods, thresholds, etc.)
+        - Risk management settings (stop loss, take profit, position sizes)
+        - Technical indicator parameters (RSI periods, moving averages, etc.)
+        - Allocation percentages
+        
+        **Note**: Changes are immediately saved to the configuration file and will affect the strategy's behavior.
+        
+        **Important**: The request must include a complete `config` object. Partial updates are not supported.
+      operationId: updateStrategy
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Strategy name to update
+          schema:
+            type: string
+            example: "momentum"
+      requestBody:
+        required: true
+        description: Updated strategy configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StrategyUpdateRequest'
+            example:
+              config:
+                enabled: true
+                priority: 1
+                allocation: 0.4
+                momentum:
+                  lookbackDays: 30
+                  thresholdPercentage: 6.0
+                  volumeThreshold: 1500000
+                riskManagement:
+                  maxPositions: 3
+                  stopLossPercentage: 1.8
+                  takeProfitPercentage: 4.0
+      responses:
+        '200':
+          description: Strategy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrategyUpdateResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Strategy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/strategies/{name}/enable:
+    post:
+      tags:
+        - Strategy Management
+      summary: Enable Strategy
+      description: |
+        Enable a trading strategy by moving it from the available list to the enabled list.
+        
+        When a strategy is enabled:
+        - It's moved from the `available` array to the `enabled` array in the configuration
+        - The strategy's `enabled` flag is set to `true`
+        - The strategy becomes active and will be used by the trading system
+        
+        **Prerequisites**: 
+        - Strategy must exist in the available strategies list
+        - Strategy must not already be enabled
+        
+        **Note**: This operation immediately updates the configuration file.
+      operationId: enableStrategy
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the strategy to enable
+          schema:
+            type: string
+            example: "wyckoff-v2"
+      responses:
+        '200':
+          description: Strategy enabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrategyActionResponse'
+        '400':
+          description: Strategy already enabled or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Strategy already enabled"
+                message: "Strategy 'momentum' is already enabled"
+        '404':
+          description: Strategy not found in available strategies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/strategies/{name}/disable:
+    post:
+      tags:
+        - Strategy Management
+      summary: Disable Strategy
+      description: |
+        Disable a trading strategy by moving it from the enabled list to the available list.
+        
+        When a strategy is disabled:
+        - It's moved from the `enabled` array to the `available` array in the configuration
+        - The strategy's `enabled` flag is set to `false`
+        - The strategy becomes inactive and will not be used by the trading system
+        
+        **Prerequisites**: 
+        - Strategy must exist in the enabled strategies list
+        
+        **Note**: This operation immediately updates the configuration file.
+      operationId: disableStrategy
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the strategy to disable
+          schema:
+            type: string
+            example: "momentum"
+      responses:
+        '200':
+          description: Strategy disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrategyActionResponse'
+        '404':
+          description: Strategy not found in enabled strategies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/account/status:
+    get:
+      tags:
+        - Account & Holdings
+      summary: Get Account Status
+      description: |
+        Retrieve account authentication status and available accounts from IBKR.
+        
+        This endpoint:
+        - Checks if the session is authenticated with IBKR
+        - Returns list of available trading accounts
+        - Identifies the primary account being used
+        
+        **Prerequisites**: 
+        - IB Gateway or TWS must be running
+        - User must be logged in to IB Gateway/TWS
+        - API connections must be enabled in IB Gateway/TWS settings
+        
+        **Account Types**:
+        - Paper trading accounts start with "DU" prefix
+        - Live trading accounts start with "U" prefix
+      operationId: getAccountStatus
+      responses:
+        '200':
+          description: Account status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountStatusResponse'
+        '401':
+          description: Not authenticated with IBKR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Connection error or IBKR API error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/account/holdings:
+    get:
+      tags:
+        - Account & Holdings
+      summary: Get Account Holdings
+      description: |
+        Retrieve current portfolio positions (holdings) from IBKR account.
+        
+        Returns detailed position information including:
+        - **Contract details**: Symbol, contract ID, currency
+        - **Position size**: Number of shares/contracts held
+        - **Market data**: Current market price, market value
+        - **Cost basis**: Average cost per share
+        - **P&L**: Unrealized profit/loss for each position
+        
+        **Position Data Fields**:
+        - `contractId`: Unique IBKR contract identifier
+        - `position`: Number of shares (positive = long, negative = short)
+        - `marketPrice`: Current market price per share
+        - `marketValue`: Total market value of position
+        - `avgCost`: Average cost basis per share
+        - `unrealizedPnl`: Unrealized profit/loss
+        
+        **Prerequisites**: 
+        - Must be authenticated with IBKR
+        - Account must have active positions to return data
+      operationId: getAccountHoldings
+      parameters:
+        - name: accountId
+          in: query
+          required: false
+          description: Specific account ID to query (uses primary account if not specified)
+          schema:
+            type: string
+            example: "DU123456"
+      responses:
+        '200':
+          description: Holdings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingsResponse'
+        '401':
+          description: Not authenticated with IBKR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/account/summary:
+    get:
+      tags:
+        - Account & Holdings
+      summary: Get Account Summary
+      description: |
+        Retrieve comprehensive account summary information from IBKR.
+        
+        Returns key account metrics including:
+        - **Net Liquidation Value**: Total account value
+        - **Total Cash Value**: Available cash balance
+        - **Gross Position Value**: Total value of all positions
+        - **Buying Power**: Available buying power
+        - **Maintenance Margin**: Required margin for current positions
+        
+        **Summary Fields**:
+        - `NetLiquidation`: Total account equity
+        - `TotalCashValue`: Cash available for trading
+        - `GrossPositionValue`: Market value of all positions
+        - `BuyingPower`: Available purchasing power
+        - `MaintMarginReq`: Maintenance margin requirement
+        
+        All monetary values include currency denomination (typically USD for US accounts).
+        
+        **Prerequisites**: 
+        - Must be authenticated with IBKR
+      operationId: getAccountSummary
+      parameters:
+        - name: accountId
+          in: query
+          required: false
+          description: Specific account ID to query (uses primary account if not specified)
+          schema:
+            type: string
+            example: "DU123456"
+      responses:
+        '200':
+          description: Account summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSummaryResponse'
+        '401':
+          description: Not authenticated with IBKR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/ibkr/connect:
+    post:
+      tags:
+        - IBKR Integration
+      summary: Connect to IBKR
+      description: |
+        Establish and test connection to Interactive Brokers Client Portal.
+        
+        This endpoint performs a comprehensive connection test:
+        1. **Health Check**: Tests basic connectivity to IB Gateway/TWS
+        2. **Authentication Check**: Verifies user is logged in
+        3. **Account Discovery**: Retrieves available trading accounts
+        4. **Configuration Validation**: Confirms API settings
+        
+        **Connection Process**:
+        - Connects using configured protocol (HTTP/HTTPS)
+        - Tests API endpoint availability
+        - Validates authentication status
+        - Discovers paper and live trading accounts
+        
+        **Prerequisites**:
+        - IB Gateway or TWS must be running on configured host/port
+        - User must be logged in with valid credentials
+        - API connections must be enabled in IB settings
+        
+        **Configuration**:
+        - Default: HTTP connection to localhost:5000
+        - Configurable via environment variables or API server options
+      operationId: connectIBKR
+      responses:
+        '200':
+          description: Successfully connected to IBKR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IBKRConnectResponse'
+        '401':
+          description: Authentication required - user not logged in to IB Gateway
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IBKRAuthErrorResponse'
+        '500':
+          description: Connection failed - IB Gateway not accessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/ibkr/status:
+    get:
+      tags:
+        - IBKR Integration
+      summary: Get IBKR Connection Status
+      description: |
+        Check current status of IBKR Client Portal connection.
+        
+        Returns comprehensive connection information:
+        - **Configuration**: Current IBKR connection settings
+        - **Health Status**: Gateway/TWS accessibility
+        - **Authentication Status**: Login and session status
+        - **Connection State**: Overall connectivity status
+        
+        **Status Information**:
+        - `config`: Connection configuration string
+        - `health`: IB Gateway health check results
+        - `authStatus`: Authentication and session details
+        - `connected`: Boolean indicating overall connection status
+        
+        **Use Cases**:
+        - Monitor connection health
+        - Troubleshoot connectivity issues
+        - Verify configuration settings
+        - Check authentication status before making trading calls
+      operationId: getIBKRStatus
+      responses:
+        '200':
+          description: IBKR status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IBKRStatusResponse'
+        '500':
+          description: Unable to check IBKR status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+          description: Server health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp in ISO 8601 format
+        ibkrConfig:
+          type: object
+          properties:
+            host:
+              type: string
+              description: IBKR Gateway host address
+              example: "127.0.0.1"
+            port:
+              type: integer
+              description: IBKR Gateway port number
+              example: 5000
+            protocol:
+              type: string
+              enum: [http, https]
+              description: Connection protocol
+              example: "http"
+          description: IBKR connection configuration
+
+    Strategy:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Unique strategy identifier
+          example: "momentum"
+        config:
+          type: object
+          description: Strategy configuration object with parameters specific to each strategy type
+          properties:
+            enabled:
+              type: boolean
+              description: Whether the strategy is currently active
+            priority:
+              type: integer
+              description: Strategy execution priority (lower number = higher priority)
+              minimum: 1
+            allocation:
+              type: number
+              format: float
+              description: Portfolio allocation percentage (0.0 to 1.0)
+              minimum: 0
+              maximum: 1
+          additionalProperties: true
+
+    StrategiesResponse:
+      type: object
+      properties:
+        enabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/Strategy'
+          description: Currently active strategies
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/Strategy'
+          description: Available but inactive strategies
+        global:
+          type: object
+          description: Global system configuration
+          properties:
+            maxConcurrentStrategies:
+              type: integer
+              description: Maximum number of strategies that can run simultaneously
+            riskAllocation:
+              type: object
+              description: Risk allocation percentages
+              properties:
+                conservative:
+                  type: number
+                  format: float
+                moderate:
+                  type: number
+                  format: float
+                aggressive:
+                  type: number
+                  format: float
+          additionalProperties: true
+
+    StrategyUpdateRequest:
+      type: object
+      required:
+        - config
+      properties:
+        config:
+          type: object
+          description: Complete strategy configuration object
+          additionalProperties: true
+
+    StrategyUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Strategy 'momentum' updated successfully"
+        strategy:
+          $ref: '#/components/schemas/Strategy'
+
+    StrategyActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the action was successful
+          example: true
+        message:
+          type: string
+          description: Action result message
+          example: "Strategy 'wyckoff-v2' enabled successfully"
+        strategy:
+          $ref: '#/components/schemas/Strategy'
+
+    AccountStatusResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+          description: Whether the session is authenticated with IBKR
+        accounts:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+                description: Account identifier
+                example: "DU123456"
+              accountVan:
+                type: string
+                description: Account VAN (Virtual Account Number)
+              displayName:
+                type: string
+                description: Human-readable account name
+          description: List of available trading accounts
+        primaryAccount:
+          type: string
+          description: Primary account ID being used
+          example: "DU123456"
+
+    Position:
+      type: object
+      properties:
+        contractId:
+          type: integer
+          description: IBKR contract identifier
+          example: 265598
+        position:
+          type: number
+          description: Number of shares/contracts (positive = long, negative = short)
+          example: 100
+        marketPrice:
+          type: number
+          format: float
+          description: Current market price per share
+          example: 150.25
+        marketValue:
+          type: number
+          format: float
+          description: Total market value of position
+          example: 15025.00
+        currency:
+          type: string
+          description: Currency denomination
+          example: "USD"
+        avgCost:
+          type: number
+          format: float
+          description: Average cost basis per share
+          example: 148.50
+        unrealizedPnl:
+          type: number
+          format: float
+          description: Unrealized profit/loss
+          example: 175.00
+
+    HoldingsResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: Account ID for these holdings
+          example: "DU123456"
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+          description: List of current positions
+        timestamp:
+          type: string
+          format: date-time
+          description: Data retrieval timestamp
+
+    AccountSummaryResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: Account ID for this summary
+          example: "DU123456"
+        summary:
+          type: object
+          description: Account summary data
+          properties:
+            NetLiquidation:
+              type: object
+              properties:
+                value:
+                  type: string
+                  description: Net liquidation value
+                  example: "100000.00"
+                currency:
+                  type: string
+                  example: "USD"
+            TotalCashValue:
+              type: object
+              properties:
+                value:
+                  type: string
+                  description: Total cash value
+                  example: "85000.00"
+                currency:
+                  type: string
+                  example: "USD"
+          additionalProperties:
+            type: object
+        timestamp:
+          type: string
+          format: date-time
+          description: Data retrieval timestamp
+
+    IBKRConnectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether connection was successful
+          example: true
+        message:
+          type: string
+          description: Connection result message
+          example: "Successfully connected to IBKR"
+        config:
+          type: string
+          description: Configuration string
+          example: "Config(host='127.0.0.1', port=5000, protocol=http, rateLimit=1, verifySsl=false)"
+        health:
+          type: object
+          description: IB Gateway health check results
+          additionalProperties: true
+        authStatus:
+          type: object
+          properties:
+            authenticated:
+              type: boolean
+              description: Authentication status
+            competing:
+              type: boolean
+              description: Whether there's a competing session
+            connected:
+              type: boolean
+              description: Connection status
+          additionalProperties: true
+        accounts:
+          type: array
+          items:
+            type: object
+          description: Available trading accounts
+
+    IBKRAuthErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Authentication required"
+        message:
+          type: string
+          example: "Please log in to IB Gateway first"
+        health:
+          type: object
+          description: Gateway health status
+        authStatus:
+          type: object
+          description: Current authentication status
+
+    IBKRStatusResponse:
+      type: object
+      properties:
+        config:
+          type: string
+          description: Current IBKR configuration
+          example: "Config(host='127.0.0.1', port=5000, protocol=http, rateLimit=1, verifySsl=false)"
+        health:
+          type: object
+          description: IB Gateway health check results
+          additionalProperties: true
+        authStatus:
+          type: object
+          description: Authentication status details
+          additionalProperties: true
+        connected:
+          type: boolean
+          description: Overall connection status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type or category
+          example: "Strategy not found"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Strategy 'invalid-name' does not exist"

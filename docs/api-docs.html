@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Strategy Management API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 0.5rem 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        .card h3 {
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+        .card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+        .card li {
+            margin: 0.5rem 0;
+        }
+        #swagger-ui {
+            margin-top: 2rem;
+        }
+        .quick-start {
+            background: #e8f5e8;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 4px solid #28a745;
+        }
+        .quick-start h3 {
+            color: #155724;
+            margin: 0 0 1rem 0;
+        }
+        .code-block {
+            background: #f1f3f4;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Trading Strategy Management API</h1>
+        <p>Comprehensive REST API for algorithmic trading strategy management and IBKR integration</p>
+    </div>
+
+    <div class="container">
+        <div class="quick-start">
+            <h3>🚀 Quick Start</h3>
+            <p>Get your API server running in 3 steps:</p>
+            <div class="code-block">
+# 1. Start the API server<br>
+npm run api-server<br><br>
+# 2. Test the health endpoint<br>
+curl http://localhost:3000/health<br><br>
+# 3. View all strategies<br>
+curl http://localhost:3000/api/strategies
+            </div>
+        </div>
+
+        <div class="info-cards">
+            <div class="card">
+                <h3>📊 Strategy Management</h3>
+                <ul>
+                    <li>View all enabled and available strategies</li>
+                    <li>Update strategy configurations dynamically</li>
+                    <li>Enable/disable strategies on demand</li>
+                    <li>Real-time configuration persistence</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>💼 Account & Holdings</h3>
+                <ul>
+                    <li>Real-time portfolio positions</li>
+                    <li>Account summary and balance</li>
+                    <li>P&L tracking and analysis</li>
+                    <li>Multi-account support</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🔌 IBKR Integration</h3>
+                <ul>
+                    <li>HTTP/HTTPS configurable connections</li>
+                    <li>Automatic rate limiting</li>
+                    <li>Session management</li>
+                    <li>Paper and live trading support</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🔧 Configuration Options</h3>
+            <div class="code-block">
+# API Server Configuration<br>
+API_HOST=localhost<br>
+API_PORT=3000<br><br>
+# IBKR Client Portal Configuration<br>
+IB_HOST=127.0.0.1<br>
+IB_PORT=5000<br>
+IB_USE_HTTPS=false  # Use HTTP for localhost<br>
+IB_VERIFY_SSL=false<br>
+IB_RATE_LIMIT=1.0
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📚 Example Usage</h3>
+            <div class="code-block">
+# Update momentum strategy allocation<br>
+curl -X PUT http://localhost:3000/api/strategies/momentum \<br>
+&nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+&nbsp;&nbsp;-d '{"config": {"allocation": 0.4}}'<br><br>
+# Enable a strategy<br>
+curl -X POST http://localhost:3000/api/strategies/wyckoff-v2/enable<br><br>
+# Get account holdings<br>
+curl http://localhost:3000/api/account/holdings
+            </div>
+        </div>
+    </div>
+
+    <!-- Swagger UI -->
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // Build a system
+            const ui = SwaggerUIBundle({
+                url: './swagger.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                docExpansion: 'list',
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+                displayOperationId: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                filter: true
+            });
+        };
+    </script>
+</body>
+</html>
