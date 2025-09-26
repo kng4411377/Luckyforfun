@@ -21,7 +21,9 @@
     "monitor": "node examples/market-monitor.js",
     "adaptive-bot": "node trading/adaptive-trading-bot.js",
     "test-adaptive": "node examples/test-adaptive-system.js",
-    "test-historical": "node examples/test-historical-data.js"
+    "test-historical": "node examples/test-historical-data.js",
+    "watchlist": "node tools/watchlist-cli.js",
+    "test-watchlist": "node examples/test-watchlist-integration.js"
   },
   "keywords": [
     "interactive-brokers",

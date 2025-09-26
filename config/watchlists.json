@@ -1,0 +1,240 @@
+{
+  "default": {
+    "name": "Default Watchlist",
+    "description": "Primary stocks for trading strategies",
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "TSLA",
+      "META",
+      "NVDA",
+      "NFLX",
+      "AMD",
+      "CRM",
+      "ADBE",
+      "PYPL",
+      "INTC",
+      "CSCO",
+      "ORCL"
+    ],
+    "enabled": true
+  },
+  "mega_cap": {
+    "name": "Mega Cap Stocks",
+    "description": "Largest companies by market cap",
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "NVDA",
+      "TSLA",
+      "META",
+      "BRK.B",
+      "UNH",
+      "JNJ"
+    ],
+    "enabled": false
+  },
+  "tech_focused": {
+    "name": "Technology Sector",
+    "description": "Pure technology plays",
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "META",
+      "NVDA",
+      "AMD",
+      "INTC",
+      "ORCL",
+      "CRM",
+      "ADBE",
+      "NFLX",
+      "PYPL",
+      "SNOW",
+      "PLTR",
+      "CRWD"
+    ],
+    "enabled": true
+  },
+  "growth_stocks": {
+    "name": "High Growth Stocks",
+    "description": "Companies with strong growth potential",
+    "symbols": [
+      "TSLA",
+      "NVDA",
+      "AMD",
+      "CRM",
+      "SNOW",
+      "PLTR",
+      "CRWD",
+      "ZM",
+      "ROKU",
+      "SQ",
+      "SHOP",
+      "TWLO",
+      "OKTA",
+      "DDOG",
+      "NET"
+    ],
+    "enabled": true
+  },
+  "dividend_aristocrats": {
+    "name": "Dividend Aristocrats",
+    "description": "Reliable dividend paying stocks",
+    "symbols": [
+      "JNJ",
+      "PG",
+      "KO",
+      "PEP",
+      "WMT",
+      "MCD",
+      "VZ",
+      "T",
+      "XOM",
+      "CVX",
+      "JPM",
+      "BAC",
+      "WFC",
+      "HD",
+      "LOW"
+    ],
+    "enabled": true
+  },
+  "momentum_plays": {
+    "name": "Momentum Stocks",
+    "description": "Stocks with strong recent momentum",
+    "symbols": [
+      "NVDA",
+      "TSLA",
+      "AMD",
+      "SMCI",
+      "ARM",
+      "AVGO",
+      "AMAT",
+      "LRCX",
+      "KLAC",
+      "MRVL",
+      "QCOM",
+      "TXN",
+      "MU",
+      "WDC",
+      "STX"
+    ],
+    "enabled": true
+  },
+  "value_picks": {
+    "name": "Value Stocks",
+    "description": "Undervalued stocks with potential",
+    "symbols": [
+      "BRK.B",
+      "JPM",
+      "BAC",
+      "WFC",
+      "XOM",
+      "CVX",
+      "IBM",
+      "INTC",
+      "F",
+      "GM",
+      "KMI",
+      "ET",
+      "MO",
+      "T",
+      "VZ"
+    ],
+    "enabled": false
+  },
+  "etf_basket": {
+    "name": "ETF Portfolio",
+    "description": "Diversified ETF selection",
+    "symbols": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "VTI",
+      "VEA",
+      "VWO",
+      "BND",
+      "TLT",
+      "GLD",
+      "SLV",
+      "XLF",
+      "XLK",
+      "XLE",
+      "XLV",
+      "XLI"
+    ],
+    "enabled": false
+  },
+  "crypto_related": {
+    "name": "Crypto Exposure",
+    "description": "Stocks with cryptocurrency exposure",
+    "symbols": [
+      "MSTR",
+      "COIN",
+      "RIOT",
+      "MARA",
+      "CLSK",
+      "HUT",
+      "BITF",
+      "ARBK",
+      "SQ",
+      "PYPL",
+      "HOOD",
+      "SOFI",
+      "NVDA",
+      "AMD",
+      "TSLA"
+    ],
+    "enabled": false
+  },
+  "market_indices": {
+    "name": "Market Indicators",
+    "description": "Key market indices for analysis",
+    "symbols": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "VIX",
+      "DXY",
+      "TLT",
+      "GLD",
+      "USO",
+      "UVXY",
+      "SQQQ"
+    ],
+    "enabled": false
+  },
+  "custom": {
+    "name": "Custom Watchlist",
+    "description": "Your personalized stock picks",
+    "symbols": [
+      "AAPL",
+      "TSLA",
+      "NVDA"
+    ],
+    "enabled": false,
+    "notes": "Edit this list with your favorite stocks"
+  },
+  "ai_revolution": {
+    "name": "AI Revolution",
+    "description": "Companies leading the AI revolution",
+    "symbols": [
+      "NVDA",
+      "AMD",
+      "GOOGL",
+      "MSFT",
+      "TSLA",
+      "PLTR",
+      "AI",
+      "SMCI",
+      "ARM"
+    ],
+    "enabled": true,
+    "notes": "Focus on artificial intelligence and machine learning companies"
+  }
+}
