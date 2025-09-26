@@ -17,7 +17,8 @@
     "strategy-manager": "node trading/strategy-manager-cli.js",
     "attach-strategy": "node trading/strategy-manager-cli.js attach",
     "detach-strategy": "node trading/strategy-manager-cli.js detach",
-    "api-server": "node examples/api-server-example.js"
+    "api-server": "node examples/api-server-example.js",
+    "monitor": "node examples/market-monitor.js"
   },
   "keywords": [
     "interactive-brokers",

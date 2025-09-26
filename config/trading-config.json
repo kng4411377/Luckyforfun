@@ -48,7 +48,7 @@
     "maxSlippage": 0.5
   },
   "automation": {
-    "enabled": false,
+    "enabled": true,
     "scanIntervalMinutes": 5,
     "tradingHours": {
       "start": "09:30",
