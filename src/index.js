@@ -8,20 +8,22 @@
 // Import all classes and functions first
 import { IBClient } from './client.js';
 import { MarketDataClient } from './market-data.js';
-import { OrderClient, OrderTypes, OrderSides, TimeInForce } from './orders.js';
-import { Config } from './config.js';
+import { HistoricalDataClient } from "./historical-data.js";
+import { OrderClient, OrderTypes, OrderSides, TimeInForce } from "./orders.js";
+import { Config } from "./config.js";
 import {
-    IBSDKError,
-    AuthenticationError,
-    RateLimitError,
-    APIError,
-    ConnectionError,
-    InvalidSymbolError
-} from './exceptions.js';
+  IBSDKError,
+  AuthenticationError,
+  RateLimitError,
+  APIError,
+  ConnectionError,
+  InvalidSymbolError,
+} from "./exceptions.js";
 
 // Re-export all imports
-export { IBClient } from './client.js';
-export { MarketDataClient } from './market-data.js';
+export { IBClient } from "./client.js";
+export { MarketDataClient } from "./market-data.js";
+export { HistoricalDataClient } from "./historical-data.js";
 export { OrderClient, OrderTypes, OrderSides, TimeInForce } from './orders.js';
 export { Config } from './config.js';
 export {
@@ -61,6 +63,18 @@ export function createMarketDataClient(options = {}) {
 }
 
 /**
+ * Create a new Historical Data Client with default configuration
+ * 
+ * @param {Object} [options] - Configuration options
+ * @returns {HistoricalDataClient} Configured Historical Data Client instance
+ */
+export function createHistoricalDataClient(options = {}) {
+    const config = new Config(options);
+    const ibClient = new IBClient(config);
+    return new HistoricalDataClient(ibClient);
+}
+
+/**
  * Create a new Order Client with default configuration
  * 
  * @param {Object} [options] - Configuration options
@@ -74,16 +88,18 @@ export function createOrderClient(options = {}) {
 
 // Default export for convenience
 export default {
-    IBClient,
-    MarketDataClient,
-    OrderClient,
-    Config,
-    createClient,
-    createMarketDataClient,
-    createOrderClient,
-    OrderTypes,
-    OrderSides,
-    TimeInForce,
-    VERSION,
-    AUTHOR
+  IBClient,
+  MarketDataClient,
+  HistoricalDataClient,
+  OrderClient,
+  Config,
+  createClient,
+  createMarketDataClient,
+  createHistoricalDataClient,
+  createOrderClient,
+  OrderTypes,
+  OrderSides,
+  TimeInForce,
+  VERSION,
+  AUTHOR,
 };
