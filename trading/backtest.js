@@ -101,8 +101,8 @@ class Backtester {
             if (!this.positions.has(symbol)) {
                 const analysis = this.strategy.analyze(symbol, marketData);
                 
-                if (analysis.signal !== 'HOLD' && analysis.strength >= 60) {
-                    this.enterPosition(symbol, analysis, candle, results);
+                if (analysis.signal !== "HOLD" && analysis.strength >= 40) {
+                  this.enterPosition(symbol, analysis, candle, results);
                 }
             } else {
                 // Check for exit signals
