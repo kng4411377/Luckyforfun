@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Backtesting Results Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .upload-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .file-upload {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .file-input-label:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+        .neutral { color: #6c757d; }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .trades-table th,
+        .trades-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .trades-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        .trades-table th:hover {
+            background: #e9ecef;
+        }
+        
+        .trades-table th.sortable::after {
+            content: ' ↕️';
+            font-size: 0.8em;
+        }
+        
+        .trades-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .trade-profit {
+            font-weight: bold;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .no-data h3 {
+            margin-bottom: 10px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-item strong {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .file-upload {
+                flex-direction: column;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .trades-table {
+                font-size: 0.9rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Backtesting Results Dashboard</h1>
+            <p>Interactive analysis of your trading strategy performance</p>
+        </div>
+        
+        <div class="upload-section">
+            <div class="file-upload">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".json" />
+                    <label for="fileInput" class="file-input-label">
+                        📁 Upload Backtest Results JSON
+                    </label>
+                </div>
+                <span id="fileName" style="color: #6c757d;"></span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div id="loadingState" class="loading" style="display: none;">
+                <h3>📊 Loading and analyzing results...</h3>
+            </div>
+            
+            <div id="errorState" class="error" style="display: none;"></div>
+            
+            <div id="noDataState" class="no-data">
+                <h3>📋 No Data Loaded</h3>
+                <p>Upload a backtest results JSON file to see the analysis</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">
+                    Files are typically located in: <code>logs/backtest-results-*.json</code>
+                </p>
+            </div>
+            
+            <div id="resultsContent" style="display: none;">
+                <!-- Overall Performance Metrics -->
+                <div class="section">
+                    <h2 class="section-title">📈 Overall Performance</h2>
+                    <div class="metrics-grid" id="metricsGrid"></div>
+                </div>
+                
+                <!-- Performance Charts -->
+                <div class="section">
+                    <h2 class="section-title">📊 Performance Charts</h2>
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 15px;">Equity Curve</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="equityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 15px;">Performance by Symbol</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="symbolChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Summary Statistics -->
+                <div class="section">
+                    <h2 class="section-title">📋 Summary Statistics</h2>
+                    <div class="summary-stats" id="summaryStats"></div>
+                </div>
+                
+                <!-- Trades Table -->
+                <div class="section">
+                    <h2 class="section-title">💼 All Trades</h2>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Symbol</label>
+                            <select id="symbolFilter">
+                                <option value="">All Symbols</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Side</label>
+                            <select id="sideFilter">
+                                <option value="">All Sides</option>
+                                <option value="BUY">BUY</option>
+                                <option value="SELL">SELL</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Min P&L ($)</label>
+                            <input type="number" id="minPnlFilter" placeholder="e.g. -100">
+                        </div>
+                        <div class="filter-group">
+                            <label>Max P&L ($)</label>
+                            <input type="number" id="maxPnlFilter" placeholder="e.g. 500">
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="trades-table" id="tradesTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-column="symbol">Symbol</th>
+                                    <th class="sortable" data-column="side">Side</th>
+                                    <th class="sortable" data-column="quantity">Quantity</th>
+                                    <th class="sortable" data-column="entryPrice">Entry Price</th>
+                                    <th class="sortable" data-column="exitPrice">Exit Price</th>
+                                    <th class="sortable" data-column="pnl">P&L ($)</th>
+                                    <th class="sortable" data-column="pnlPercent">P&L (%)</th>
+                                    <th class="sortable" data-column="holdingDays">Holding Days</th>
+                                    <th class="sortable" data-column="entryDate">Entry Date</th>
+                                    <th class="sortable" data-column="exitDate">Exit Date</th>
+                                    <th class="sortable" data-column="reason">Exit Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let allTrades = [];
+        let filteredTrades = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
+        
+        // File upload handling
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        
+        // Filter event listeners
+        document.getElementById('symbolFilter').addEventListener('change', applyFilters);
+        document.getElementById('sideFilter').addEventListener('change', applyFilters);
+        document.getElementById('minPnlFilter').addEventListener('input', applyFilters);
+        document.getElementById('maxPnlFilter').addEventListener('input', applyFilters);
+        
+        // Table sorting
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', () => sortTable(th.dataset.column));
+        });
+        
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('noDataState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'none';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processData(data);
+                } catch (error) {
+                    showError('Error parsing JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function processData(data) {
+            currentData = data;
+            allTrades = data.trades || [];
+            
+            try {
+                // Show results
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('resultsContent').style.display = 'block';
+                
+                // Populate dashboard
+                populateMetrics(data.results.overall);
+                populateSummaryStats(data);
+                populateSymbolFilter();
+                createCharts(data);
+                applyFilters();
+                
+            } catch (error) {
+                showError('Error processing data: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorState').textContent = message;
+        }
+        
+        function populateMetrics(overall) {
+            const metrics = [
+                {
+                    label: 'Total Return',
+                    value: `$${overall.totalReturn.toFixed(2)}`,
+                    class: overall.totalReturn >= 0 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Return %',
+                    value: `${overall.totalReturnPercent.toFixed(2)}%`,
+                    class: overall.totalReturnPercent >= 0 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Total Trades',
+                    value: overall.totalTrades,
+                    class: 'neutral'
+                },
+                {
+                    label: 'Win Rate',
+                    value: `${overall.winRate.toFixed(1)}%`,
+                    class: overall.winRate >= 50 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Avg Return/Trade',
+                    value: `$${overall.averageReturn.toFixed(2)}`,
+                    class: overall.averageReturn >= 0 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Max Drawdown',
+                    value: `${overall.maxDrawdown.toFixed(2)}%`,
+                    class: overall.maxDrawdown <= 10 ? 'positive' : overall.maxDrawdown <= 20 ? 'neutral' : 'negative'
+                },
+                {
+                    label: 'Profit Factor',
+                    value: overall.profitFactor.toFixed(2),
+                    class: overall.profitFactor >= 1.5 ? 'positive' : overall.profitFactor >= 1 ? 'neutral' : 'negative'
+                },
+                {
+                    label: 'Sharpe Ratio',
+                    value: overall.sharpeRatio.toFixed(2),
+                    class: overall.sharpeRatio >= 1 ? 'positive' : overall.sharpeRatio >= 0 ? 'neutral' : 'negative'
+                }
+            ];
+            
+            const metricsGrid = document.getElementById('metricsGrid');
+            metricsGrid.innerHTML = metrics.map(metric => `
+                <div class="metric-card">
+                    <div class="metric-value ${metric.class}">${metric.value}</div>
+                    <div class="metric-label">${metric.label}</div>
+                </div>
+            `).join('');
+        }
+        
+        function populateSummaryStats(data) {
+            const overall = data.results.overall;
+            const config = data.config;
+            
+            const stats = [
+                { label: 'Initial Capital', value: `$${config.backtesting.initialCapital.toLocaleString()}` },
+                { label: 'Test Period', value: `${config.backtesting.startDate} to ${config.backtesting.endDate}` },
+                { label: 'Symbols Tested', value: data.results.bySymbol.length },
+                { label: 'Gross Profit', value: `$${overall.grossProfit.toFixed(2)}` },
+                { label: 'Gross Loss', value: `$${overall.grossLoss.toFixed(2)}` },
+                { label: 'Strategy', value: config.strategy.name },
+                { label: 'Momentum Threshold', value: `${config.momentum.thresholdPercentage}%` },
+                { label: 'Stop Loss', value: `${config.riskManagement.stopLossPercentage}%` }
+            ];
+            
+            const summaryStats = document.getElementById('summaryStats');
+            summaryStats.innerHTML = stats.map(stat => `
+                <div class="stat-item">
+                    <strong>${stat.value}</strong>
+                    <span>${stat.label}</span>
+                </div>
+            `).join('');
+        }
+        
+        function populateSymbolFilter() {
+            const symbols = [...new Set(allTrades.map(trade => trade.symbol))];
+            const symbolFilter = document.getElementById('symbolFilter');
+            
+            symbolFilter.innerHTML = '<option value="">All Symbols</option>' +
+                symbols.map(symbol => `<option value="${symbol}">${symbol}</option>`).join('');
+        }
+        
+        function createCharts(data) {
+            createEquityChart(data.trades);
+            createSymbolChart(data.results.bySymbol);
+        }
+        
+        function createEquityChart(trades) {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            
+            // Calculate cumulative P&L
+            let cumulativePnL = currentData.config.backtesting.initialCapital;
+            const equityData = [{ x: new Date(currentData.config.backtesting.startDate), y: cumulativePnL }];
+            
+            // Handle case with no trades
+            if (!trades || trades.length === 0) {
+                // Create a flat line showing initial capital
+                const startDate = new Date(currentData.config.backtesting.startDate);
+                const endDate = new Date(currentData.config.backtesting.endDate);
+                equityData.push({ x: endDate, y: cumulativePnL });
+                
+                console.log('No trades found, showing flat equity curve');
+            } else {
+                trades.forEach(trade => {
+                    cumulativePnL += trade.pnl;
+                    equityData.push({ x: new Date(trade.exitDate), y: cumulativePnL });
+                });
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: equityData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Portfolio Value: $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createSymbolChart(symbolResults) {
+            const ctx = document.getElementById('symbolChart').getContext('2d');
+            
+            // Handle case with no results
+            if (!symbolResults || symbolResults.length === 0) {
+                console.log('No symbol results found');
+                // Create empty chart with message
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Data'],
+                        datasets: [{
+                            label: 'No Results',
+                            data: [0],
+                            backgroundColor: '#6c757d'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'No trading results to display'
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
+            const symbols = symbolResults.map(result => result.symbol);
+            const returns = symbolResults.map(result => result.totalReturn || 0);
+            const colors = returns.map(ret => ret >= 0 ? '#28a745' : '#dc3545');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: symbols,
+                    datasets: [{
+                        label: 'Total Return ($)',
+                        data: returns,
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const symbolData = symbolResults[context.dataIndex];
+                                    return [
+                                        `Total Return: $${context.parsed.y.toFixed(2)}`,
+                                        `Trades: ${symbolData.totalTrades}`,
+                                        `Win Rate: ${symbolData.totalTrades > 0 ? ((symbolData.winningTrades / symbolData.totalTrades) * 100).toFixed(1) : 0}%`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function applyFilters() {
+            const symbolFilter = document.getElementById('symbolFilter').value;
+            const sideFilter = document.getElementById('sideFilter').value;
+            const minPnl = parseFloat(document.getElementById('minPnlFilter').value) || -Infinity;
+            const maxPnl = parseFloat(document.getElementById('maxPnlFilter').value) || Infinity;
+            
+            filteredTrades = allTrades.filter(trade => {
+                return (!symbolFilter || trade.symbol === symbolFilter) &&
+                       (!sideFilter || trade.side === sideFilter) &&
+                       (trade.pnl >= minPnl && trade.pnl <= maxPnl);
+            });
+            
+            updateTable();
+        }
+        
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredTrades.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            updateTable();
+        }
+        
+        function updateTable() {
+            const tbody = document.getElementById('tradesTableBody');
+            
+            tbody.innerHTML = filteredTrades.map(trade => `
+                <tr>
+                    <td><strong>${trade.symbol}</strong></td>
+                    <td><span style="color: ${trade.side === 'BUY' ? '#28a745' : '#dc3545'}">${trade.side}</span></td>
+                    <td>${trade.quantity}</td>
+                    <td>$${trade.entryPrice.toFixed(2)}</td>
+                    <td>$${trade.exitPrice.toFixed(2)}</td>
+                    <td class="trade-profit ${trade.pnl >= 0 ? 'positive' : 'negative'}">$${trade.pnl.toFixed(2)}</td>
+                    <td class="${trade.pnlPercent >= 0 ? 'positive' : 'negative'}">${trade.pnlPercent.toFixed(2)}%</td>
+                    <td>${trade.holdingDays}</td>
+                    <td>${new Date(trade.entryDate).toLocaleDateString()}</td>
+                    <td>${new Date(trade.exitDate).toLocaleDateString()}</td>
+                    <td><small>${trade.reason}</small></td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

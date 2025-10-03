@@ -14,6 +14,11 @@
     "trading-bot": "node trading/momentum-bot.js",
     "strategy-test": "node trading/strategy-test.js",
     "backtest": "node trading/backtest.js",
+    "adaptive-backtest": "node trading/adaptive-backtest.js",
+    "working-adaptive-backtest": "node trading/working-adaptive-backtest.js",
+    "diagnostic-backtest": "node trading/diagnostic-backtest.js",
+    "fixed-backtest": "node trading/fixed-backtest.js",
+    "configurable-backtest": "node trading/configurable-backtest.js",
     "strategy-manager": "node trading/strategy-manager-cli.js",
     "attach-strategy": "node trading/strategy-manager-cli.js attach",
     "detach-strategy": "node trading/strategy-manager-cli.js detach",
@@ -23,7 +28,8 @@
     "test-adaptive": "node examples/test-adaptive-system.js",
     "test-historical": "node examples/test-historical-data.js",
     "watchlist": "node tools/watchlist-cli.js",
-    "test-watchlist": "node examples/test-watchlist-integration.js"
+    "test-watchlist": "node examples/test-watchlist-integration.js",
+    "dashboard": "node server/dashboard-server.js"
   },
   "keywords": [
     "interactive-brokers",

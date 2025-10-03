@@ -75,9 +75,14 @@
     }
   },
   "backtesting": {
-    "enabled": false,
+    "enabled": true,
     "startDate": "2023-01-01",
     "endDate": "2023-12-31",
-    "initialCapital": 100000
+    "initialCapital": 100000,
+    "timeframe": {
+      "period": "1y",
+      "barSize": "1d",
+      "customPeriod": false
+    }
   }
 }
